@@ -20,7 +20,7 @@ jobs:
           path: monitor-state.json
           key: monitor-state-${{ github.run_id }}
           restore-keys: monitor-state-
-      - run: node monitor.js --once
+      - run: node monitor.js --test
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
