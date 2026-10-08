@@ -1,0 +1,38 @@
+name: Yukecil Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'     # 每 5 分钟（GitHub 可能延迟几分钟）。私有仓库请改成 '*/30 * * * *'
+  workflow_dispatch:           # 允许手动点“Run workflow”测试
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 恢复上次状态（用来判断“连续失败”和“已恢复”）
+        uses: actions/cache/restore@v4
+        with:
+          path: monitor-state.json
+          key: monitor-state-${{ github.run_id }}
+          restore-keys: monitor-state-
+
+      - name: 检查链接并发送 Telegram 预警
+        run: node monitor.js --once
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+
+      - name: 保存状态
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: monitor-state.json
+          key: monitor-state-${{ github.run_id }}
